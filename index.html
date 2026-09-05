@@ -167,19 +167,41 @@ button {
 }
 
 .pianoScroll {
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
+  width:100%;
+  overflow:hidden;
   padding:5px 0;
 }
 
 .piano {
   position:relative;
   display:flex;
+  width:100%;
+  min-width:0;
   height:235px;
-  min-width:620px;
   user-select:none;
   -webkit-user-select:none;
-  touch-action:manipulation;
+  touch-action:none;
+}
+
+.white {
+  width:12.5%;
+  flex:0 0 12.5%;
+  height:100%;
+  background:#fff;
+  border:1px solid #adb3ba;
+  border-radius:0 0 8px 8px;
+  z-index:1;
+}
+
+.black {
+  position:absolute;
+  top:0;
+  width:7.5%;
+  height:61%;
+  background:#202328;
+  border:1px solid #0c0e10;
+  border-radius:0 0 6px 6px;
+  z-index:4;
 }
 
 .key {
@@ -243,11 +265,11 @@ button {
   }
 
   .game {
-    padding:12px;
+    padding:8px;
   }
 
   .piano {
-    height:205px;
+    height:190px;
   }
 }
 </style>
