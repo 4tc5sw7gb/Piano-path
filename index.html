@@ -1,1 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#52779d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Piano Path">
 
+<title>Piano Path</title>
+
+<style>
+:root {
+  --bg:#f1f2f4;
+  --card:#ffffff;
+  --text:#17191d;
+  --muted:#737b85;
+  --border:#d6d9dd;
+  --blue:#52779d;
+  --green:#358052;
+  --red:#ad4c4c;
+}
+
+* {
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overscroll-behavior:none;
+}
+
+.app {
+  max-width:850px;
+  margin:auto;
+  padding:20px 14px 40px;
+}
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.logo {
+  font-size:22px;
+  font-weight:800;
+}
+
+.subtitle {
+  font-size:13px;
+  color:var(--muted);
+}
+
+.mode {
+  display:flex;
+  gap:6px;
+}
+
+button {
+  font-family:inherit;
+}
+
+.smallButton {
+  border:1px solid var(--border);
+  background:white;
+  border-radius:10px;
+  min-height:44px;
+  padding:0 13px;
+  font-weight:700;
+}
+
+.smallButton.active {
+  background:var(--blue);
+  color:white;
+  border-color:var(--blue);
+}
+
+.stats {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin:16px 0;
+}
+
+.stat {
+  background:white;
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:10px;
+}
+
+.stat span {
+  font-size:10px;
+  letter-spacing:.08em;
+  color:var(--muted);
+}
+
+.stat strong {
+  display:block;
+  font-size:19px;
+  margin-top:2px;
+}
+
+.game {
+  background:white;
+  border:1px solid var(--border);
+  border-radius:15px;
+  padding:16px;
+}
+
+.challenge {
+  text-align:center;
+  padding:12px 5px 20px;
+}
+
+.playLabel {
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.15em;
+  color:var(--muted);
+}
+
+#target {
+  font-size:clamp(42px,10vw,68px);
+  font-weight:850;
+  margin:8px 0;
+}
+
+#instruction {
+  color:var(--muted);
+}
+
+#feedback {
+  min-height:26px;
+  margin-top:9px;
+  font-weight:750;
+}
+
+.correct {
+  color:var(--green);
+}
+
+.wrong {
+  color:var(--red);
+}
+
+.progress {
+  height:7px;
+  border-radius:20px;
+  overflow:hidden;
+  background:#e3e6e9;
+  margin-top:13px;
+}
+
+#progressBar {
+  height:100%;
+  width:0%;
+  background:var(--blue);
+  transition:width .25s;
+}
+
+.pianoScroll {
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:5px 0;
+}
+
+.piano {
+  position:relative;
+  display:flex;
+  height:235px;
+  min-width:620px;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:manipulation;
+}
+
+.key {
+  appearance:none;
+  -webkit-appearance:none;
+  padding:0;
+  margin:0;
+  touch-action:manipulation;
+}
+
+.white {
+  flex:1;
+  height:100%;
+  background:#fff;
+  border:1px solid #adb3ba;
+  border-radius:0 0 8px 8px;
+  z-index:1;
+}
+
+.black {
+  position:absolute;
+  top:0;
+  width:8.4%;
+  height:61%;
+  background:#202328;
+  border:1px solid #0c0e10;
+  border-radius:0 0 6px 6px;
+  z-index:4;
+}
+
+.key.pressed {
+  filter:brightness(.72);
+}
+
+.controls {
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+.control {
+  min-height:44px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:white;
+  padding:0 14px;
+  font-weight:700;
+}
+
+.course {
+  margin-top:16px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.5;
+}
+
+@media(max-width:560px) {
+  .stats {
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .game {
+    padding:12px;
+  }
+
+  .piano {
+    height:205px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="app">
+
+<div class="header">
+
+<div>
+<div class="logo">Piano Path</div>
+<div class="subtitle">Learn notes and chords by playing</div>
+</div>
+
+<div class="mode">
+<button id="journeyButton" class="smallButton active">Journey</button>
+<button id="practiceButton" class="smallButton">Practice</button>
+</div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<span>LEVEL</span>
+<strong id="level">1</strong>
+</div>
+
+<div class="stat">
+<span>XP</span>
+<strong id="xp">0 / 100</strong>
+</div>
+
+<div class="stat">
+<span>STREAK</span>
+<strong id="streak">0</strong>
+</div>
+
+<div class="stat">
+<span>ACCURACY</span>
+<strong id="accuracy">100%</strong>
+</div>
+
+</div>
+
+<section class="game">
+
+<div class="challenge">
+
+<div class="playLabel">PLAY</div>
+
+<div id="target">C</div>
+
+<div id="instruction">
+Play the note
+</div>
+
+<div id="feedback">
+Tap the correct piano key.
+</div>
+
+<div class="progress">
+<div id="progressBar"></div>
+</div>
+
+</div>
+
+<div class="pianoScroll">
+
+<div class="piano">
+
+<button class="key white" data-note="C"></button>
+<button class="key white" data-note="D"></button>
+<button class="key white" data-note="E"></button>
+<button class="key white" data-note="F"></button>
+<button class="key white" data-note="G"></button>
+<button class="key white" data-note="A"></button>
+<button class="key white" data-note="B"></button>
+<button class="key white" data-note="C2"></button>
+
+<button class="key black"
+data-note="C#"
+style="left:8.3%">
+</button>
+
+<button class="key black"
+data-note="D#"
+style="left:20.8%">
+</button>
+
+<button class="key black"
+data-note="F#"
+style="left:45.8%">
+</button>
+
+<button class="key black"
+data-note="G#"
+style="left:58.3%">
+</button>
+
+<button class="key black"
+data-note="A#"
+style="left:70.8%">
+</button>
+
+</div>
+
+</div>
+
+<div class="controls">
+
+<button id="hintButton" class="control">
+Hint
+</button>
+
+<button id="newButton" class="control">
+New challenge
+</button>
+
+<button id="resetButton" class="control">
+Reset
+</button>
+
+</div>
+
+<div class="course">
+
+<strong>Journey progression:</strong>
+
+white notes → sharps/flats → major chords → minor chords →
+mixed notes and chords → inversions → seventh chords →
+longer note/chord sequences.
+
+Difficulty increases gradually.
+
+</div>
+
+</section>
+
+</main>
+
+<script>
+
+const chromatic = [
+"C","C#","D","D#","E","F",
+"F#","G","G#","A","A#","B"
+];
+
+const flatNames = {
+"C#":"D♭",
+"D#":"E♭",
+"F#":"G♭",
+"G#":"A♭",
+"A#":"B♭"
+};
+
+let state = {
+level:1,
+xp:0,
+streak:0,
+correct:0,
+attempts:0,
+mode:"journey"
+};
+
+try {
+
+const saved =
+JSON.parse(localStorage.getItem("pianoPathSave"));
+
+if(saved)
+Object.assign(state,saved);
+
+}
+catch(e){}
+
+let target = null;
+
+let heldNotes = new Set();
+
+let locked = false;
+
+let audioContext = null;
+
+const keys =
+Array.from(document.querySelectorAll(".key"));
+
+function saveGame(){
+
+try {
+
+localStorage.setItem(
+"pianoPathSave",
+JSON.stringify(state)
+);
+
+}
+catch(e){}
+
+}
+
+function updateDisplay(){
+
+document.getElementById("level")
+.textContent = state.level;
+
+document.getElementById("xp")
+.textContent = state.xp + " / 100";
+
+document.getElementById("streak")
+.textContent = state.streak;
+
+let accuracy = 100;
+
+if(state.attempts > 0){
+
+accuracy =
+Math.round(
+(state.correct/state.attempts)*100
+);
+
+}
+
+document.getElementById("accuracy")
+.textContent = accuracy + "%";
+
+document.getElementById("progressBar")
+.style.width = state.xp + "%";
+
+saveGame();
+
+}
+
+function notePool(){
+
+if(state.mode === "practice")
+return chromatic;
+
+if(state.level <= 2)
+return ["C","D","E"];
+
+if(state.level <= 5)
+return ["C","D","E","F","G"];
+
+if(state.level <= 10)
+return ["C","D","E","F","G","A","B"];
+
+if(state.level <= 14)
+return [
+"C","D","E","F","G","A","B","F#"
+];
+
+if(state.level <= 18)
+return [
+"C","D","E","F","G","A","B",
+"F#","C#"
+];
+
+return chromatic;
+
+}
+
+function createTriad(root,minor){
+
+const index =
+chromatic.indexOf(root);
+
+const third =
+minor ? 3 : 4;
+
+return [
+
+chromatic[index],
+
+chromatic[
+(index + third) % 12
+],
+
+chromatic[
+(index + 7) % 12
+]
+
+];
+
+}
+
+function displayNote(note){
+
+if(
+flatNames[note] &&
+Math.random() < .5
+){
+
+return flatNames[note];
+
+}
+
+return note;
+
+}
+
+function newChallenge(){
+
+locked = false;
+
+heldNotes.clear();
+
+keys.forEach(key=>{
+key.style.outline="";
+});
+
+let useChord = false;
+
+if(
+state.mode === "practice"
+){
+
+useChord =
+Math.random() < .65;
+
+}
+
+else if(
+state.level >= 25
+){
+
+useChord =
+Math.random() <
+Math.min(
+.25 +
+(state.level-25)*.015,
+.75
+);
+
+}
+
+if(useChord){
+
+let roots;
+
+if(
+state.mode === "journey" &&
+state.level < 35
+){
+
+roots =
+["C","F","G","A","D"];
+
+}
+
+else {
+
+roots = chromatic;
+
+}
+
+const root =
+roots[
+Math.floor(
+Math.random()*roots.length
+)
+];
+
+const minor =
+(
+state.mode === "practice" ||
+state.level >= 31
+)
+&&
+Math.random() < .48;
+
+target = {
+
+type:"chord",
+
+notes:
+createTriad(
+root,
+minor
+),
+
+label:
+displayNote(root) +
+(minor ?
+" minor" :
+" major")
+
+};
+
+document.getElementById(
+"instruction"
+).textContent =
+"Play all 3 notes";
+
+}
+
+else {
+
+const pool =
+notePool();
+
+const note =
+pool[
+Math.floor(
+Math.random()*pool.length
+)
+];
+
+target = {
+
+type:"note",
+
+notes:[note],
+
+label:
+displayNote(note)
+
+};
+
+document.getElementById(
+"instruction"
+).textContent =
+"Play the note";
+
+}
+
+document.getElementById(
+"target"
+).textContent =
+target.label;
+
+const feedback =
+document.getElementById(
+"feedback"
+);
+
+feedback.textContent =
+"Your turn";
+
+feedback.className="";
+
+}
+
+function startAudio(){
+
+try {
+
+if(!audioContext){
+
+audioContext =
+new(
+window.AudioContext ||
+window.webkitAudioContext
+)();
+
+}
+
+if(
+audioContext.state ===
+"suspended"
+){
+
+audioContext.resume();
+
+}
+
+}
+catch(e){}
+
+}
+
+function playTone(rawNote){
+
+startAudio();
+
+if(!audioContext)
+return;
+
+let note =
+rawNote === "C2"
+? "C"
+: rawNote;
+
+let index =
+chromatic.indexOf(note);
+
+let midi =
+60 + index;
+
+if(rawNote === "C2")
+midi += 12;
+
+const frequency =
+440 *
+Math.pow(
+2,
+(midi-69)/12
+);
+
+const oscillator =
+audioContext.createOscillator();
+
+const gain =
+audioContext.createGain();
+
+const filter =
+audioContext.createBiquadFilter();
+
+oscillator.type =
+"triangle";
+
+oscillator.frequency.value =
+frequency;
+
+filter.type =
+"lowpass";
+
+filter.frequency.value =
+1800;
+
+gain.gain.setValueAtTime(
+0.0001,
+audioContext.currentTime
+);
+
+gain.gain.exponentialRampToValueAtTime(
+0.18,
+audioContext.currentTime + .015
+);
+
+gain.gain.exponentialRampToValueAtTime(
+0.0001,
+audioContext.currentTime + .8
+);
+
+oscillator.connect(filter);
+
+filter.connect(gain);
+
+gain.connect(
+audioContext.destination
+);
+
+oscillator.start();
+
+oscillator.stop(
+audioContext.currentTime + .82
+);
+
+}
+
+function correctAnswer(){
+
+if(locked)
+return;
+
+locked = true;
+
+state.correct++;
+
+state.attempts++;
+
+state.streak++;
+
+if(
+state.mode === "journey"
+){
+
+state.xp += 10;
+
+if(
+state.xp >= 100
+){
+
+state.xp -= 100;
+
+state.level++;
+
+document.getElementById(
+"feedback"
+).textContent =
+"Level " +
+state.level +
+" unlocked";
+
+}
+
+else {
+
+document.getElementById(
+"feedback"
+).textContent =
+"Correct";
+
+}
+
+}
+
+else {
+
+document.getElementById(
+"feedback"
+).textContent =
+"Correct";
+
+}
+
+document.getElementById(
+"feedback"
+).className =
+"correct";
+
+updateDisplay();
+
+setTimeout(
+newChallenge,
+650
+);
+
+}
+
+function wrongAnswer(){
+
+state.attempts++;
+
+state.streak = 0;
+
+heldNotes.clear();
+
+document.getElementById(
+"feedback"
+).textContent =
+"Try again";
+
+document.getElementById(
+"feedback"
+).className =
+"wrong";
+
+updateDisplay();
+
+}
+
+function pressKey(key){
+
+if(
+locked ||
+!target
+)
+return;
+
+const rawNote =
+key.dataset.note;
+
+const note =
+rawNote === "C2"
+? "C"
+: rawNote;
+
+playTone(rawNote);
+
+key.classList.add(
+"pressed"
+);
+
+setTimeout(()=>{
+
+key.classList.remove(
+"pressed"
+);
+
+},100);
+
+if(
+target.type === "note"
+){
+
+if(
+note === target.notes[0]
+){
+
+correctAnswer();
+
+}
+
+else {
+
+wrongAnswer();
+
+}
+
+return;
+
+}
+
+if(
+target.notes.includes(note)
+){
+
+heldNotes.add(note);
+
+let complete =
+target.notes.every(
+n=>heldNotes.has(n)
+);
+
+if(complete)
+correctAnswer();
+
+}
+
+else {
+
+wrongAnswer();
+
+}
+
+}
+
+keys.forEach(key=>{
+
+key.addEventListener(
+"pointerdown",
+event=>{
+
+event.preventDefault();
+
+pressKey(key);
+
+}
+);
+
+});
+
+document.getElementById(
+"hintButton"
+).addEventListener(
+"click",
+()=>{
+
+keys.forEach(key=>{
+
+const note =
+key.dataset.note === "C2"
+? "C"
+: key.dataset.note;
+
+if(
+target.notes.includes(note)
+){
+
+key.style.outline =
+"3px solid #52779d";
+
+}
+
+});
+
+document.getElementById(
+"feedback"
+).textContent =
+"Required key" +
+(
+target.notes.length > 1
+? "s"
+: ""
+) +
+" highlighted";
+
+}
+);
+
+document.getElementById(
+"newButton"
+).addEventListener(
+"click",
+newChallenge
+);
+
+document.getElementById(
+"journeyButton"
+).addEventListener(
+"click",
+()=>{
+
+state.mode =
+"journey";
+
+document.getElementById(
+"journeyButton"
+).classList.add(
+"active"
+);
+
+document.getElementById(
+"practiceButton"
+).classList.remove(
+"active"
+);
+
+updateDisplay();
+
+newChallenge();
+
+}
+);
+
+document.getElementById(
+"practiceButton"
+).addEventListener(
+"click",
+()=>{
+
+state.mode =
+"practice";
+
+document.getElementById(
+"practiceButton"
+).classList.add(
+"active"
+);
+
+document.getElementById(
+"journeyButton"
+).classList.remove(
+"active"
+);
+
+updateDisplay();
+
+newChallenge();
+
+}
+);
+
+document.getElementById(
+"resetButton"
+).addEventListener(
+"click",
+()=>{
+
+state = {
+level:1,
+xp:0,
+streak:0,
+correct:0,
+attempts:0,
+mode:"journey"
+};
+
+updateDisplay();
+
+newChallenge();
+
+}
+);
+
+updateDisplay();
+
+newChallenge();
+
+</script>
+
+</body>
+</html>
